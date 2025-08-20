@@ -1,0 +1,45 @@
+strategy:
+  name: aroon
+  use_combination: true
+  type:
+    long: true
+    short: true
+
+  size:
+    use_combination: false
+    use_vectorbt: true
+    use_fast: true
+    trailing: true
+    tp_pct:
+      use_fix: true
+      fix: 0.05
+      min: 0.01
+      max: 0.05
+      step: 0.01
+      use_custom: false
+    sl_pct:
+      use_fix: true
+      fix: 0.03
+      min: 0.01
+      max: 0.03
+      step: 0.01
+      use_custom: false
+    amount: 10000
+
+  time:
+    start_date: 2025-03-29
+    end_date: 2025-08-12
+    timeframe: 4h
+
+  symbols:
+      use_all: true
+      symbols:
+        - BTCUSDT
+        - ETHUSDT
+
+
+
+processor:
+  max_processors: 10
+  max_chunks: 100
+
