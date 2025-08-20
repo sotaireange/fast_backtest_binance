@@ -29,7 +29,7 @@ def run_backtest_with_liveupdater(config: MainConfig):
                 TextColumn("{task.fields[symbol]}"),
                 BarColumn(),
                 TextColumn("{task.percentage:>3.0f}%"),
-                TextColumn("{task.fields[completed_syms]}/{task.fields[total_syms]} symbols"),
+                TextColumn("{task.fields[completed_syms]}/{task.fields[total_syms]} syms"),
                 TimeElapsedColumn(),
                 TimeRemainingColumn(),
                 console=console,

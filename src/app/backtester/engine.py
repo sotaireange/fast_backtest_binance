@@ -145,9 +145,7 @@ class MultiParamPortfolioBacktest:
             params.pop('short_entries')
         else:
             params.pop('entries')
-        # print(f'KEYS {params.keys()}')
-        # for key,val in params.items():
-        #     print(f'{key} type - {type(val)} ')
+
         return (vbt.Portfolio.from_signals(
             close=df['Close'],
             open=df['Open'],
