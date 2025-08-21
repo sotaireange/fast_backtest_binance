@@ -2,7 +2,7 @@ import inspect
 import yaml
 
 from src.app.strategies.registry import strategy_registry
-
+import os
 
 from typing import Callable
 
@@ -35,7 +35,8 @@ def generate_yaml_template(func:Callable,func_name:str=''):
 
 def generate_all_template():
     for name,func in strategy_registry.items():
-        generate_yaml_template(func,name)
+        if not os.path.exists(f'config/{name}_strategy_config.yaml'):
+            generate_yaml_template(func,name)
 
 
 if __name__=='__main__':
