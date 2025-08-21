@@ -11,6 +11,7 @@ from src.app.models import EntryExitResult,MainConfig
 
 from vectorbt import IndicatorFactory
 from vectorbt.indicators.factory import IndicatorBase
+from src.common.loggers import get_logger
 
 
 

@@ -38,9 +38,14 @@ class MultiParamPortfolioBacktest:
 
     def _get_entries(self,params:Dict,**kwargs) -> Tuple[pd.DataFrame,pd.DataFrame,pd.MultiIndex]:
         kwargs = {k: v for k, v in kwargs.items() if k in self.indicator.input_names}
-        result=self.indicator.run(**kwargs,
-                                  **params,
-                                  param_product=False)
+        result=tuple()
+        try:
+            result=self.indicator.run(**kwargs,
+                                      **params,
+                                      param_product=False)
+        except Exception as e:
+            logger.exception('Eror in _get_entries)')
+        if not result: return result
         if isinstance(result.buy, pd.Series):
             return result.buy.to_frame(), result.sell.to_frame(), result.buy.to_frame().columns
         return result.buy,result.sell,result.buy.columns
@@ -52,16 +57,22 @@ class MultiParamPortfolioBacktest:
             low = kwargs['low']
         except KeyError as e:
             raise ValueError(f"Missing required price array in kwargs: {e}")
+        exits = tuple()
+        try:
+            exits=_get_exits(
+                close=close,
+                high=high,
+                low=low,
+                long_entries=long_entries,
+                short_entries=short_entries,
+                tp_pct=self.config.strategy.size.tp_pct.fix,
+                sl_pct=self.config.strategy.size.sl_pct.fix
+            )
+        except Exception as e:
+            logger.exception('Erro in _get_exits')
+        finally:
 
-        return _get_exits(
-            close=close,
-            high=high,
-            low=low,
-            long_entries=long_entries,
-            short_entries=short_entries,
-            tp_pct=self.config.strategy.size.tp_pct.fix,
-            sl_pct=self.config.strategy.size.sl_pct.fix
-        )
+            return exits
 
 
 
@@ -184,9 +195,9 @@ class MultiParamPortfolioBacktest:
                 self.get_result_from_backtest(data,params)
                 progress_sym=((idx*self.config.processor.max_chunks)/total_comb)
                 self.progress_dict[self.pid]=(data.coin,progress_sym,idx_symbol,total)
-                logger.debug(self.progress_dict)
+                logger.info(self.progress_dict[self.pid])
             except Exception as e:
-                logger.error(f'Error handled\n {e}',exc_info=True)
+                logger.exception(f'Error handled\n {e}')
 
 
     def run(self):
@@ -201,7 +212,7 @@ class MultiParamPortfolioBacktest:
                 else:
                     logger.info(f'Empty dataframe, symbol = {symbol}')
         except Exception as e:
-            logger.exception('Critical Error')
+            logger.exception(f'Critical Error when backtest {e}')
         finally:
             logger.info(f'Finished PID {self.pid}')
             self.progress_dict[self.pid] = ("done", 1.0, total,total)
