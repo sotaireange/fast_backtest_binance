@@ -45,6 +45,8 @@ def get_logger(name: str, log_to_console: bool = True, log_both: bool = False) -
 
 def redirect_external_loggers_to_file(file_name="all_logs"):
     ensure_log_dir()
+    return
+
     file_handler = get_file_handler(file_name)
     for name, logger in logging.root.manager.loggerDict.items():
         if isinstance(logger, logging.Logger):
