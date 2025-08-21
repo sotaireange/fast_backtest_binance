@@ -5,17 +5,22 @@ import multiprocessing
 from rich.prompt import Prompt
 from rich.table import Table
 
-
-from src.app.utils.config_loader import get_main_config
+from src.app.models.config_schema import MainConfig
+from src.app.models.strategy_config_scheme import ParamConfig
+from src.app.utils.config_loader import get_main_config,get_param_config
 from src.interface.cli.live_updater import run_backtest_with_liveupdater
 from src.scripts.run_download import run_download
 from src.scripts.generate_configs import generate_all_template
 
 from src.common.loggers import console,get_logger
-
+from src.app.backtester.combination_generation import ParamCombinationsGenerator
 
 log = get_logger('app',True)
 
+def get_total_combination(config:MainConfig):
+    param_config=get_param_config(config.strategy.name)
+    pcg=ParamCombinationsGenerator(param_config)
+    return pcg.get_total_combinations()
 
 
 def show_menu():
@@ -41,7 +46,8 @@ async def run_cli():
             await run_download(config)
             log.info("Data download completed ✅")
         if command == "run":
-            log.info("Starting backtest for all parameters...")
+            total_comb=get_total_combination(config)
+            log.info(f"Starting backtest for all parameters...\n Total combination - {total_comb}")
             run_backtest_with_liveupdater(config)
             log.info("Backtest completed ✅")
 
