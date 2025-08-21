@@ -28,9 +28,8 @@ class TpSlConfig(BaseModel):
     use_custom: bool
 
 class SizeConfig(BaseModel):
-    use_combination: bool
     use_fast: bool # use for vectorized
-    use_vectorbt: bool # False for use vectorbt
+    use_only_tp_sl: bool # False for use exit with tp/sl
     trailing: bool # True - use trailing
     tp_pct: TpSlConfig
     sl_pct: TpSlConfig
@@ -89,10 +88,10 @@ class MainConfig(BaseModel):
 
     def to_dict(self) -> Dict:
         return self.dict()
-    def use_vectorbt(self):
+    def use_fast(self):
         size_cfg = self.strategy.size
         return (
-                (size_cfg.tp_pct.use_fix and size_cfg.sl_pct.use_fix)
-                or not size_cfg.use_fast
-                or not size_cfg.use_vectorbt
+                not (size_cfg.tp_pct.use_fix and size_cfg.sl_pct.use_fix)
+                or size_cfg.use_fast
+                or size_cfg.use_vectorbt
         )

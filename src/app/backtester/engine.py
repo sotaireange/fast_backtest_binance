@@ -67,7 +67,7 @@ class MultiParamPortfolioBacktest:
 
     def _get_entries_and_exists(self,params:Dict,**kwargs) -> EntryExitResult:
         long_entries,short_entries,columns=self._get_entries(params,**kwargs)
-        if self.config.strategy.size.use_vectorbt:
+        if self.config.strategy.size.use_only_tp_sl:
             long_exits = None
             short_exits = None
         else:
@@ -164,11 +164,12 @@ class MultiParamPortfolioBacktest:
                                                  low=df['Low'].values,
                                                  volume=df['Volume'].values)
 
-        if self.config.use_vectorbt():
-            result=self._combination_via_tp_sl(df,entry_exits)
-        else:# self.config.strategy.size.use_fast:
+        if self.config.use_fast():
             entry_exits,tp_sl=self._get_tp_sl(entry_exits)
             result=self.run_portfolio(df,entry_exits,tp_sl)
+        else:# self.config.strategy.size.use_fast:
+            result=self._combination_via_tp_sl(df,entry_exits)
+
         backtest_result=BackTestResult(coin=data.coin,result=result)
         self.data_handler.save_result_to_csv(backtest_result)
 

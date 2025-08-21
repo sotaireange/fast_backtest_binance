@@ -1,38 +1,38 @@
 strategy:
-  name: aroon
-  use_combination: true
+  name: aroon #name of strategy, which register in src/app/strategies/
+  use_combination: true #DOESNT WORK
   type:
-    long: true
-    short: true
+    #Both true if Long and short, otherwise only one true
+    long: true #Only long
+    short: true #Only Short
 
   size:
-    use_combination: false
-    use_vectorbt: true
-    use_fast: true
-    trailing: true
+    use_only_tp_sl: true #exit only when tp/sl
+    use_fast: true #use fast combination(tp/sl)
+    trailing: true #DOESNT WORK
     tp_pct:
-      use_fix: true
+      use_fix: true #when use_fix=true, use fix, otherwise use combinations where [min,max,step]=[0.01,0.05,0.01]=[0.01,0.02,0.03,0.04,0.05]
       fix: 0.05
       min: 0.01
       max: 0.05
       step: 0.01
-      use_custom: false
+      use_custom: false #DOESNT WORK
     sl_pct:
-      use_fix: true
-      fix: 0.03
+      use_fix: true #when use_fix=true, use fix, otherwise use combinations where [min,max,step]=[0.01,0.05,0.01]=[0.01,0.02,0.03,0.04,0.05]
+      fix: 0.05
       min: 0.01
-      max: 0.03
+      max: 0.05
       step: 0.01
-      use_custom: false
-    amount: 10000
+      use_custom: false #DOESNT WORK
+    amount: 10000 #use amount for backtest(pass it)
 
   time:
-    start_date: 2025-03-29
-    end_date: 2025-08-12
-    timeframe: 4h
+    start_date: 2025-03-29 #FORMAT : YYYY-MM-DD (2025-03-29 - 29 March 2025 )
+    end_date: 2025-08-12  #FORMAT : YYYY-MM-DD (2025-03-29 - 12 August 2025 )
+    timeframe: 4h #TF: 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w ,1M
 
   symbols:
-      use_all: true
+      use_all: true # When use all=true - backtest all coins(~500) otherwise - use symbols for backtest
       symbols:
         - BTCUSDT
         - ETHUSDT
@@ -40,6 +40,6 @@ strategy:
 
 
 processor:
-  max_processors: 10
-  max_chunks: 100
+  max_processors: 10 #Processor which will be run for backtest
+  max_chunks: 100 #Nums for combination params. ~1000 when use Fix TP/SL, ~100 when use Combination TP/SL
 
