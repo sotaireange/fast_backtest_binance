@@ -9,8 +9,7 @@ from rich.table import Table
 from src.app.utils.config_loader import get_main_config
 from src.interface.cli.live_updater import run_backtest_with_liveupdater
 from src.scripts.run_download import run_download
-
-
+from src.scripts.generate_configs import generate_all_template
 
 from src.common.loggers import console,get_logger
 
@@ -32,6 +31,7 @@ def show_menu():
 
 async def run_cli():
     show_menu()
+    generate_all_template()
     while True:
         command = Prompt.ask("[bold yellow]Enter command[/]", default="run").strip().lower()
         config=get_main_config()
