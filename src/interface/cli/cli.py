@@ -47,7 +47,7 @@ async def run_cli():
             log.info("Data download completed ✅")
         if command == "run":
             total_comb=get_total_combination(config)
-            log.info(f"Starting backtest for all parameters...\n Total combination - {total_comb}")
+            log.info(f"Starting backtest for all parameters...\nTotal combination - {total_comb}")
             run_backtest_with_liveupdater(config)
             log.info("Backtest completed ✅")
 

@@ -25,7 +25,7 @@ class CSVHandler:
     def _get_filepath_result(self,coin:str) -> os.path:
         start_date=self.config.strategy.time.start_date.date()
         end_date=self.config.strategy.time.end_date.date()
-        folder_path = Path('data/processed') / f'{start_date}_{end_date}' / self.config.strategy.time.timeframe
+        folder_path = Path('data/processed')/ f'{self.config.strategy.name}' / f'{start_date}_{end_date}' / self.config.strategy.time.timeframe
         folder_path.mkdir(parents=True, exist_ok=True)
         return str(folder_path / f'{coin}.csv')
 
