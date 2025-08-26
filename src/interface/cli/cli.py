@@ -1,15 +1,15 @@
 import asyncio
 import multiprocessing
 
-
 from rich.prompt import Prompt
 from rich.table import Table
-
 from src.app.models.config_schema import MainConfig
 from src.app.models.strategy_config_scheme import ParamConfig
 from src.app.utils.config_loader import get_main_config,get_param_config
 from src.interface.cli.live_updater import run_backtest_with_liveupdater
-from src.scripts import start_download,generate_all_template,start_analysis
+from src.scripts.run_download import start_download
+from src.scripts.generate_configs import generate_all_template
+from src.scripts.run_analysis import start_analysis
 
 from src.common.loggers import console,get_logger
 from src.app.backtester.combination_generation import ParamCombinationsGenerator
