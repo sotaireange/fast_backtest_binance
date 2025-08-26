@@ -1,5 +1,6 @@
 import yaml
-from src.app.models import MainConfig,ParamConfig
+from src.app.models.config_schema import MainConfig
+from src.app.models.strategy_config_scheme import ParamConfig
 from src.app.strategies import get_indicator
 from src.scripts.generate_configs import generate_yaml_template
 
