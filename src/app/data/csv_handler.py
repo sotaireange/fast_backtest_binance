@@ -40,7 +40,7 @@ class DataHandler:
 
     def _get_filepath_analysis(self,name:str,coin:bool):
         folder_path=self._get_folderpath_analysis()
-        return str(folder_path / f'{name}.csv') if not coin else str(folder_path / 'symbols' / f'{name.csv}')
+        return str(folder_path / f'{name}.csv') if not coin else str(folder_path / 'symbols' / f'{name}.csv')
 
     def _get_filepath_result(self,coin:str) -> os.path:
         folder_path=self._get_folderpath_result()
