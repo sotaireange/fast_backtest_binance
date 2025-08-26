@@ -3,7 +3,7 @@ import pandas as pd
 from src.common.loggers import get_logger
 
 from src.app.data.csv_handler import DataHandler
-from src.app.models import MainConfig
+from src.app.models.config_schema import MainConfig
 from src.app.data.types import COLUMNS_RESULT
 
 
