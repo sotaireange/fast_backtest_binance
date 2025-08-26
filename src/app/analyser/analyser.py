@@ -66,4 +66,4 @@ class TradingAnalyser:
             self.get_aggregate_by_symbol()
             self.get_aggregate_analysis()
         except Exception as e:
-            logger.error(f'Error while analysis,\n {e}')
+            logger.exception(f'Error while analysis,\n {e}')
