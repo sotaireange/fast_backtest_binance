@@ -1,5 +1,6 @@
 import pandas as pd
 from pydantic import BaseModel,ConfigDict
+from dataclasses import dataclass
 from typing import Optional,List,Union,Dict
 import numpy as np
 from enum import Enum
@@ -7,6 +8,12 @@ from datetime import datetime
 
 COLUMNS_RAW=['Open Time', 'Open', 'High', 'Low', 'Close', 'Volume']
 COLUMNS_RESULT=['Max Drawdown [%]','Profit Factor','Sharpe Ratio','Total Trades','Win Rate [%]','Total Return [%]']
+
+@dataclass
+class FormatDataReader:
+    CSV='csv'
+    PARQUET='parquet'
+
 
 class Types(str, Enum):
     NONE=0 #do none

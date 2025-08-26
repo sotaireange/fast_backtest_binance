@@ -15,7 +15,7 @@ from src.app.models import EntryExitResult,MainConfig,TpSlComb,BackTestResult,Ba
 from src.app.backtester.combination_generation import ParamCombinationsGenerator
 from src.app.data.downloader import get_symbols
 from src.app.utils.helpers import chunkify
-from src.app.data.csv_handler import CSVHandler
+from src.app.data.csv_handler import DataHandler
 from src.common.loggers import get_logger
 
 
@@ -26,9 +26,9 @@ logger=get_logger('backtester',False)
 
 class MultiParamPortfolioBacktest:
 
-    def __init__(self, config:MainConfig,pid:int=0,symbols:Optional[List[str]]=None,progress_dict:Optional[DictProxy]=None,):
+    def __init__(self, config:MainConfig,pid:int=0,symbols:Optional[List[str]]=None,progress_dict:Optional[DictProxy]=None):
         self.config:MainConfig=config
-        self.data_handler=CSVHandler(config)
+        self.data_handler=DataHandler(config)
         self.params=get_param_config(config.strategy.name)
         self.indicator=get_strategy(config.strategy.name)
         self.params_comb=ParamCombinationsGenerator(self.params)

@@ -22,7 +22,7 @@ def run_portfolio(config_dict:Dict,pid:int,chunk:List[str],progress_dict:Optiona
     bt=MultiParamPortfolioBacktest(config,pid,chunk,progress_dict)
     bt.run()
 
-def run_backtest(config: MainConfig, chunks: List[List[str]] ,progress_dict: Optional[DictProxy]=None):
+def start_backtest(config: MainConfig, chunks: List[List[str]], progress_dict: Optional[DictProxy]=None):
     config_dict = config.to_dict()
     processes = []
     for pid, chunk in enumerate(chunks):
@@ -39,4 +39,4 @@ if __name__ == '__main__':
     config=get_main_config()
     symbols = get_symbols(config)
     chunks = chunkify(symbols, config.processor.max_processors)
-    run_backtest(config,chunks=chunks)
+    start_backtest(config, chunks=chunks)

@@ -7,27 +7,49 @@ from typing import Optional, List, Dict,Tuple
 
 from src.common.loggers import get_logger
 from src.app.models import MainConfig,BackTestResult
-from src.app.data.types import COLUMNS_RAW,COLUMNS_RESULT
+from src.app.data.types import COLUMNS_RAW,COLUMNS_RESULT,FormatDataReader
 from src.app.strategies.registry import get_strategy
-
 log=get_logger('data_handler',False)
 
-class CSVHandler:
+class DataHandler:
+    FORMAT=FormatDataReader.PARQUET
+    FOLDER_PATH={'raw':'data/raw/','processed':'data/processed','analysis':'data/analysis'}
+
     def __init__(self,config:MainConfig):
         self.config=config
 
+
     def _get_filepath_raw(self,coin:str) -> str:
-        folder_path = Path('data/raw') / self.config.strategy.time.timeframe
+        folder_path = Path(self.FOLDER_PATH['raw']) / self.config.strategy.time.timeframe
         folder_path.mkdir(parents=True, exist_ok=True)
         return str(folder_path / f'{coin}.csv')
 
-
-    def _get_filepath_result(self,coin:str) -> os.path:
+    def _get_folderpath_result(self) -> os.path:
         start_date=self.config.strategy.time.start_date.date()
         end_date=self.config.strategy.time.end_date.date()
-        folder_path = Path('data/processed')/ f'{self.config.strategy.name}' / f'{start_date}_{end_date}' / self.config.strategy.time.timeframe
+        folder_path = Path(self.FOLDER_PATH['processed']) / f'{start_date}_{end_date}' / self.config.strategy.time.timeframe / f'{self.config.strategy.name}'
         folder_path.mkdir(parents=True, exist_ok=True)
-        return str(folder_path / f'{coin}.csv')
+        return folder_path
+
+    def _get_folderpath_analysis(self):
+        start_date=self.config.strategy.time.start_date.date()
+        end_date=self.config.strategy.time.end_date.date()
+        folder_path = Path(self.FOLDER_PATH['analysis']) / f'{start_date}_{end_date}' / self.config.strategy.time.timeframe / f'{self.config.strategy.name}'
+        folder_path.mkdir(parents=True, exist_ok=True)
+        return folder_path
+
+    def _get_filepath_analysis(self,name:str,coin:bool):
+        folder_path=self._get_folderpath_analysis()
+        return str(folder_path / f'{name}.csv') if not coin else str(folder_path / 'symbols' / f'{name.csv}')
+
+    def _get_filepath_result(self,coin:str) -> os.path:
+        folder_path=self._get_folderpath_result()
+        return str(folder_path / f'{coin}.{self.FORMAT}')
+
+
+    def _get_all_symbol_in_folder(self) -> List[str]:
+        folder_path=self._get_folderpath_result()
+        return [file.stem for file in folder_path.glob(f"*.{self.FORMAT}")]
 
 
     def get_or_empty_df(self,coin:str) -> pd.DataFrame:
@@ -42,6 +64,10 @@ class CSVHandler:
             return pd.DataFrame(columns=COLUMNS_RAW)
 
 
+    def get_index_result_keys(self):
+        return [f'{self.config.strategy.name}_{param}' for param in get_strategy(self.config.strategy.name).param_names]
+
+
     def get_df_with_datetime(self,coin:str,start:datetime,end:datetime) -> pd.DataFrame:
         df= self.get_or_empty_df(coin)
         df=df.loc[start:end]
@@ -51,15 +77,31 @@ class CSVHandler:
     def get_result_or_empty_df(self,coin:str) -> pd.DataFrame:
         filepath=self._get_filepath_result(coin)
         if os.path.exists(filepath):
-            df=pd.read_csv(filepath,index_col=[])
-            param_cols = [col for col in df.columns if col.startswith(f"{self.config.strategy.name}_")]
-            param_cols = [col for col in df.columns if col in param_cols]
-            df = df.set_index(param_cols)
+            if self.FORMAT==FormatDataReader.CSV:
+                df=pd.read_csv(filepath,index_col=[])
+                param_cols = self.get_index_result_keys() + ['tp_stop', 'sl_stop']
+                df = df.set_index(param_cols)
+            else:
+                df=pd.read_parquet(filepath,engine='pyarrow')
+
         else:
             params_names=[f'{self.config.strategy.name}_{param}' for param in get_strategy(self.config.strategy.name).param_names]
             index = pd.MultiIndex.from_arrays([[] for _ in params_names], names=params_names)
             df=pd.DataFrame(columns=COLUMNS_RESULT,index=index)
         return df
+
+
+    def get_all_result(self) -> pd.DataFrame:
+        symbols=self._get_all_symbol_in_folder()
+        all_dfs=[]
+        for symbol in symbols:
+            df=self.get_result_or_empty_df(symbol)
+            df['symbol']=symbol
+            df=df.set_index('symbol',append=True)
+            all_dfs.append(df)
+        return pd.concat(all_dfs).sort_index()
+
+
 
     def get_combination_done(self,coin:str) -> Optional[pd.MultiIndex]:
         df=self.get_result_or_empty_df(coin)
@@ -83,13 +125,16 @@ class CSVHandler:
 
         write_header = not (os.path.exists(filepath) and os.path.getsize(filepath) > 0)
         if (result.result is not None) and (not result.result.empty):
-            result.result.to_csv(
-                filepath,
-                columns=COLUMNS_RESULT,
-                mode='a',
-                header=write_header,
-            )
+            if self.FORMAT==FormatDataReader.CSV:
+                result.result.to_csv(
+                    filepath,
+                    columns=COLUMNS_RESULT,
+                    mode='a',
+                    header=write_header,
+                )
+            else:
+                result.result.to_parquet(filepath,engine='pyarrow')
 
-
-
-
+    def save_analysis(self,df:pd.DataFrame,name:str,coin:bool=False):
+        filepath=self._get_filepath_analysis(name,coin)
+        df.to_csv(filepath,index=True,mode='w')

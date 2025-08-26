@@ -9,8 +9,7 @@ from src.app.models.config_schema import MainConfig
 from src.app.models.strategy_config_scheme import ParamConfig
 from src.app.utils.config_loader import get_main_config,get_param_config
 from src.interface.cli.live_updater import run_backtest_with_liveupdater
-from src.scripts.run_download import run_download
-from src.scripts.generate_configs import generate_all_template
+from src.scripts import start_download,generate_all_template,start_analysis
 
 from src.common.loggers import console,get_logger
 from src.app.backtester.combination_generation import ParamCombinationsGenerator
@@ -43,7 +42,7 @@ async def run_cli():
         if command in ['run','download']:
             text = '~5 min.' if config.strategy.symbols.use_all else '<1 min.'
             log.info(f"Downloading data. Please wait. Estimated time: {text}")
-            await run_download(config)
+            await start_download(config)
             log.info("Data download completed ✅")
         if command == "run":
             total_comb=get_total_combination(config)
@@ -53,6 +52,7 @@ async def run_cli():
 
         elif command == "analysis":
             log.info("Starting analysis...")
+            start_analysis(config)
             log.info("Analysis completed ✅")
 
 

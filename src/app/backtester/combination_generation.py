@@ -59,7 +59,7 @@ class BatchIterator:
 
 
 
-class ParamCombinationsGenerator:
+class ParamCombinationsGenerator: #TODO: Сделать так , чтобы flag aroon/main был только один
     def __init__(self, config: ParamConfig):
         self.config = config
 
@@ -111,8 +111,7 @@ class ParamCombinationsGenerator:
             params,
             batch_size,
             flag_forbidden,
-            flag_keys,
-            exclude_combos=exclude_combos
+            flag_keys,  aaz
         )
 
 

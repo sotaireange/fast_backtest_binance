@@ -7,6 +7,6 @@ from src.app.data.downloader import BinanceDataDownloader
 
 log=get_logger('downloader',True)
 
-async def run_download(config:MainConfig):
+async def start_download(config:MainConfig):
     async with BinanceDataDownloader(config) as bdd:
         await bdd.download_multiple_symbols()

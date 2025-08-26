@@ -12,7 +12,7 @@ from src.common.loggers import get_logger
 
 from src.app.models import MainConfig
 from src.app.data.types import COLUMNS_RAW,DataCoverage,DataRange
-from src.app.data.csv_handler import CSVHandler
+from src.app.data.csv_handler import DataHandler
 
 
 
@@ -39,7 +39,7 @@ def get_symbols(config:MainConfig) -> List[str]:
 class BinanceDataDownloader:
     def __init__(self,config: MainConfig):
         self.config=config
-        self.data_handler=CSVHandler(config)
+        self.data_handler=DataHandler(config)
 
 
         logging.basicConfig(level=logging.INFO)
