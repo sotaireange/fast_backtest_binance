@@ -36,6 +36,8 @@ class DataHandler:
         end_date=self.config.strategy.time.end_date.date()
         folder_path = Path(self.FOLDER_PATH['analysis']) / f'{start_date}_{end_date}' / self.config.strategy.time.timeframe / f'{self.config.strategy.name}'
         folder_path.mkdir(parents=True, exist_ok=True)
+        folder_path_symbol=folder_path / 'symbols'
+        folder_path_symbol.mkdir(parents=True, exist_ok=True)
         return folder_path
 
     def _get_filepath_analysis(self,name:str,coin:bool):
