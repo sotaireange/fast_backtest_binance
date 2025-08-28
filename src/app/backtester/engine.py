@@ -79,12 +79,9 @@ class MultiParamPortfolioBacktest:
     def _get_entries_and_exists(self,params:Dict,**kwargs) -> EntryExitResult:
         long_entries,short_entries,columns=self._get_entries(params,**kwargs)
         if self.config.strategy.size.use_only_tp_sl:
-            logger.error(f'USE_ONLy_TP_SL = TRUE')
             long_exits = None
             short_exits = None
         else:
-            logger.error(f'USE_ONLy_TP_SL = FALSE')
-
             long_exits, short_exits = self._get_exits(
                 long_entries=long_entries.values,
                 short_entries=short_entries.values,
@@ -192,9 +189,6 @@ class MultiParamPortfolioBacktest:
 
         if self.config.use_fast():
             entry_exits,tp_sl=self._get_tp_sl(entry_exits)
-            logger.error(f'SHAPE OF ENTRY LONG {entry_exits.long_entries.shape}\n'
-                         f'SHAPE OF LONG EXITS {entry_exits.long_exits.shape}'
-                         f'LEN OF TP_SL {len(tp_sl.tp)}')
             result=self.run_portfolio(df,entry_exits,tp_sl)
         else:# self.config.strategy.size.use_fast:
             result=self._combination_via_tp_sl(df,entry_exits)
