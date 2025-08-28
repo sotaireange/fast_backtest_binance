@@ -98,8 +98,7 @@ class MultiParamPortfolioBacktest:
         short_entries=entry_exits.short_entries
         long_exits=entry_exits.long_exits
         short_exits=entry_exits.short_exits
-        logger.error(f'long_exits {long_exits.shape}\n'
-                     f'{long_exits}')
+
         tp_sl_index=self.config.strategy.size.get_combinations()
         multi_index = pd.MultiIndex.from_tuples(
             [param + sltp for param in entries.columns for sltp in tp_sl_index],
@@ -108,8 +107,8 @@ class MultiParamPortfolioBacktest:
         entries_expanded = pd.concat([entries] * len(tp_sl_index), axis=1)
         short_entries_expanded = pd.concat([short_entries] * len(tp_sl_index), axis=1)
         if long_exits is not None:
-            exits_expanded = pd.concat([entries] * len(tp_sl_index), axis=1)
-            short_exits_expanded = pd.concat([short_entries] * len(tp_sl_index), axis=1)
+            exits_expanded = pd.concat([long_exits] * len(tp_sl_index), axis=1)
+            short_exits_expanded = pd.concat([short_exits] * len(tp_sl_index), axis=1)
             exits_expanded.columns = multi_index
             short_exits_expanded.columns = multi_index
             entry_exits.long_exits=exits_expanded
