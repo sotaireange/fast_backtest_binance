@@ -24,7 +24,7 @@ logger=get_logger('backtester',False)
 
 
 
-class MultiParamPortfolioBacktest:
+class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет решить эту проблему, когда tp_sl комбинация
 
     def __init__(self, config:MainConfig,pid:int=0,symbols:Optional[List[str]]=None,progress_dict:Optional[DictProxy]=None):
         self.config:MainConfig=config

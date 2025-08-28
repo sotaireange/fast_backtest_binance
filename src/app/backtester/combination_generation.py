@@ -60,6 +60,7 @@ class BatchIterator:
 
 
 class ParamCombinationsGenerator: #TODO: Сделать так , чтобы flag aroon/main был только один
+    #TODO: Сделать комбинацию с ТП СЛ
     def __init__(self, config: ParamConfig):
         self.config = config
 
@@ -105,13 +106,14 @@ class ParamCombinationsGenerator: #TODO: Сделать так , чтобы flag
         flag_forbidden = getattr(self.config.settings, 'flag_forbidden', False)
         flag_keys = self._flag_keys(params) if flag_forbidden else []
 
-        exclude_combos = list(map(tuple, exclude_combos)) if exclude_combos is not None and not exclude_combos.empty else []
+        exclude_combos = list(map(tuple, exclude_combos)) if exclude_combos is not None and not exclude_combos.empty else None
 
         return BatchIterator(
             params,
             batch_size,
             flag_forbidden,
             flag_keys,
+            exclude_combos
         )
 
 
