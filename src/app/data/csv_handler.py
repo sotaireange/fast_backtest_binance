@@ -139,7 +139,7 @@ class DataHandler:
 
                 if os.path.exists(filepath):
                     existing_data = pd.read_parquet(filepath, engine='pyarrow')
-                    combined_data = pd.concat([existing_data, filtered_data], ignore_index=True)
+                    combined_data = pd.concat([existing_data, filtered_data], ignore_index=False)
                     combined_data.to_parquet(filepath, engine='pyarrow',index=combined_data.index)
                 else:
                     filtered_data.to_parquet(filepath, engine='pyarrow',index=filtered_data.index)
