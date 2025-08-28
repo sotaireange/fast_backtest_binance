@@ -79,9 +79,12 @@ class MultiParamPortfolioBacktest:
     def _get_entries_and_exists(self,params:Dict,**kwargs) -> EntryExitResult:
         long_entries,short_entries,columns=self._get_entries(params,**kwargs)
         if self.config.strategy.size.use_only_tp_sl:
+            logger.error(f'USE_ONLy_TP_SL = TRUE')
             long_exits = None
             short_exits = None
         else:
+            logger.error(f'USE_ONLy_TP_SL = FALSE')
+
             long_exits, short_exits = self._get_exits(
                 long_entries=long_entries.values,
                 short_entries=short_entries.values,
@@ -96,6 +99,10 @@ class MultiParamPortfolioBacktest:
     def _get_tp_sl(self,entry_exits:EntryExitResult) -> Tuple[EntryExitResult,TpSlComb]:
         entries=entry_exits.long_entries
         short_entries=entry_exits.short_entries
+        long_exits=entry_exits.long_exits
+        short_exits=entry_exits.short_exits
+        logger.error(f'long_exits {long_exits.shape}\n'
+                     f'{long_exits}')
         tp_sl_index=self.config.strategy.size.get_combinations()
         multi_index = pd.MultiIndex.from_tuples(
             [param + sltp for param in entries.columns for sltp in tp_sl_index],
@@ -103,6 +110,13 @@ class MultiParamPortfolioBacktest:
         )
         entries_expanded = pd.concat([entries] * len(tp_sl_index), axis=1)
         short_entries_expanded = pd.concat([short_entries] * len(tp_sl_index), axis=1)
+        """if long_exits is not None:
+            exits_expanded = pd.concat([entries] * len(tp_sl_index), axis=1)
+            short_exits_expanded = pd.concat([short_entries] * len(tp_sl_index), axis=1)
+            exits_expanded.columns = multi_index
+            short_exits_expanded.columns = multi_index
+            entry_exits.long_exits=exits_expanded
+            entry_exits.short_exits=short_exits_expanded"""
         entries_expanded.columns = multi_index
         short_entries_expanded.columns = multi_index
         entry_exits.long_entries=entries_expanded
