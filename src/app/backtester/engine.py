@@ -194,7 +194,6 @@ class MultiParamPortfolioBacktest:
 
         backtest_result=BackTestResult(coin=data.coin,result=result)
         self.data_handler.save_result(backtest_result)
-        return backtest_result
 
 
     def run_backtest_one_coin(self,data:BackTestData,total:int,idx_symbol:int):
