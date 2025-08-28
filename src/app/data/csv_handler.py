@@ -122,7 +122,7 @@ class DataHandler:
         df.to_csv(filepath,index=True,mode=mode,header=header,index_label='Open Time')
 
 
-    def save_result_to_csv(self, result: BackTestResult):
+    def save_result(self, result: BackTestResult):
         filepath = self._get_filepath_result(result.coin)
 
         write_header = not (os.path.exists(filepath) and os.path.getsize(filepath) > 0)
@@ -135,7 +135,14 @@ class DataHandler:
                     header=write_header,
                 )
             else:
-                result.result.to_parquet(filepath,engine='pyarrow')
+                filtered_data = result.result[COLUMNS_RESULT]
+
+                if os.path.exists(filepath):
+                    existing_data = pd.read_parquet(filepath, engine='pyarrow')
+                    combined_data = pd.concat([existing_data, filtered_data], ignore_index=True)
+                    combined_data.to_parquet(filepath, engine='pyarrow')
+                else:
+                    filtered_data.to_parquet(filepath, engine='pyarrow')
 
     def save_analysis(self,df:pd.DataFrame,name:str,coin:bool=False):
         filepath=self._get_filepath_analysis(name,coin)

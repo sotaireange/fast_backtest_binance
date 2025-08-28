@@ -182,7 +182,7 @@ class MultiParamPortfolioBacktest:
             result=self._combination_via_tp_sl(df,entry_exits)
 
         backtest_result=BackTestResult(coin=data.coin,result=result)
-        self.data_handler.save_result_to_csv(backtest_result)
+        self.data_handler.save_result(backtest_result)
 
 
 
