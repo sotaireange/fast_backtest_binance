@@ -7,7 +7,7 @@ from enum import Enum
 from datetime import datetime
 
 COLUMNS_RAW=['Open Time', 'Open', 'High', 'Low', 'Close', 'Volume']
-COLUMNS_RESULT=['Max Drawdown [%]','Profit Factor','Total Trades','Win Rate [%]','Total Return [%]']#'Sharpe Ratio']
+COLUMNS_RESULT=['Max Drawdown [%]','Total Trades','Win Rate [%]','Open Trade PnL','Total Return [%]']#,'Profit Factor','Sharpe Ratio']
 
 @dataclass
 class FormatDataReader:
