@@ -95,3 +95,6 @@ class MainConfig(BaseModel):
                 or size_cfg.use_fast
                 or size_cfg.use_vectorbt
         )
+
+    def get_date(self) -> Tuple[datetime,datetime]:
+        return self.strategy.time.start_date,self.strategy.time.end_date

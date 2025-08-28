@@ -205,7 +205,8 @@ class MultiParamPortfolioBacktest:
         try:
             for idx,symbol in enumerate(self.symbols):
                 self.progress_dict[self.pid]=(symbol,0.0,idx,total)
-                df=self.data_handler.get_or_empty_df(symbol)
+                start_date,end_date=self.config.get_date()
+                df=self.data_handler.get_df_with_datetime(symbol,start_date,end_date)
                 if not df.empty:
                     data=BackTestData(coin=symbol,df=df)
                     self.run_backtest_one_coin(data,total,idx)
