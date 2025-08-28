@@ -156,6 +156,28 @@ class MultiParamPortfolioBacktest:
             params.pop('short_entries')
         else:
             params.pop('entries')
+        try:
+            stats=(vbt.Portfolio.from_signals(
+                close=df['Close'],
+                open=df['Open'],
+                high=df['High'],
+                low=df['Low'],
+                **params
+            )).stats()
+        except:
+            logger.error(f'ERROR WHEN PORTFOLIO WITHOUT AGG {params['entries'].shape}')
+
+        try:
+            stats=(vbt.Portfolio.from_signals(
+                close=df['Close'],
+                open=df['Open'],
+                high=df['High'],
+                low=df['Low'],
+                **params
+            )).stats(agg_func=None)
+        except:
+            logger.error(f'ERROR WHEN PORTFOLIO AGG {params['entries'].shape}')
+
 
         return (vbt.Portfolio.from_signals(
             close=df['Close'],
@@ -177,13 +199,15 @@ class MultiParamPortfolioBacktest:
 
         if self.config.use_fast():
             entry_exits,tp_sl=self._get_tp_sl(entry_exits)
+            logger.error(f'SHAPE OF ENTRY EXITS {entry_exits.long_entries.shape}\n'
+                         f'LEN OF TP_SL {len(tp_sl.tp)}')
             result=self.run_portfolio(df,entry_exits,tp_sl)
         else:# self.config.strategy.size.use_fast:
             result=self._combination_via_tp_sl(df,entry_exits)
 
         backtest_result=BackTestResult(coin=data.coin,result=result)
         self.data_handler.save_result(backtest_result)
-
+        return backtest_result
 
 
     def run_backtest_one_coin(self,data:BackTestData,total:int,idx_symbol:int):
@@ -205,8 +229,7 @@ class MultiParamPortfolioBacktest:
         try:
             for idx,symbol in enumerate(self.symbols):
                 self.progress_dict[self.pid]=(symbol,0.0,idx,total)
-                start_date,end_date=self.config.get_date()
-                df=self.data_handler.get_df_with_datetime(symbol,start_date,end_date)
+                df=self.data_handler.get_or_empty_df(symbol)
                 if not df.empty:
                     data=BackTestData(coin=symbol,df=df)
                     self.run_backtest_one_coin(data,total,idx)
