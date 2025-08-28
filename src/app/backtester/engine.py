@@ -156,27 +156,6 @@ class MultiParamPortfolioBacktest:
             params.pop('short_entries')
         else:
             params.pop('entries')
-        try:
-            stats=(vbt.Portfolio.from_signals(
-                close=df['Close'],
-                open=df['Open'],
-                high=df['High'],
-                low=df['Low'],
-                **params
-            )).stats()
-        except:
-            logger.error(f'ERROR WHEN PORTFOLIO WITHOUT AGG {params['entries'].shape}')
-
-        try:
-            stats=(vbt.Portfolio.from_signals(
-                close=df['Close'],
-                open=df['Open'],
-                high=df['High'],
-                low=df['Low'],
-                **params
-            )).stats(agg_func=None)
-        except:
-            logger.error(f'ERROR WHEN PORTFOLIO AGG {params['entries'].shape}')
 
 
         return (vbt.Portfolio.from_signals(
@@ -199,7 +178,8 @@ class MultiParamPortfolioBacktest:
 
         if self.config.use_fast():
             entry_exits,tp_sl=self._get_tp_sl(entry_exits)
-            logger.error(f'SHAPE OF ENTRY EXITS {entry_exits.long_entries.shape}\n'
+            logger.error(f'SHAPE OF ENTRY LONG {entry_exits.long_entries.shape}\n'
+                         f'SHAPE OF LONG EXITS {entry_exits.long_exits.shape}'
                          f'LEN OF TP_SL {len(tp_sl.tp)}')
             result=self.run_portfolio(df,entry_exits,tp_sl)
         else:# self.config.strategy.size.use_fast:
