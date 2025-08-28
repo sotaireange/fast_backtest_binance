@@ -107,13 +107,13 @@ class MultiParamPortfolioBacktest:
         )
         entries_expanded = pd.concat([entries] * len(tp_sl_index), axis=1)
         short_entries_expanded = pd.concat([short_entries] * len(tp_sl_index), axis=1)
-        """if long_exits is not None:
+        if long_exits is not None:
             exits_expanded = pd.concat([entries] * len(tp_sl_index), axis=1)
             short_exits_expanded = pd.concat([short_entries] * len(tp_sl_index), axis=1)
             exits_expanded.columns = multi_index
             short_exits_expanded.columns = multi_index
             entry_exits.long_exits=exits_expanded
-            entry_exits.short_exits=short_exits_expanded"""
+            entry_exits.short_exits=short_exits_expanded
         entries_expanded.columns = multi_index
         short_entries_expanded.columns = multi_index
         entry_exits.long_entries=entries_expanded
