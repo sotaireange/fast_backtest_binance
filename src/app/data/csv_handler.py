@@ -140,9 +140,9 @@ class DataHandler:
                 if os.path.exists(filepath):
                     existing_data = pd.read_parquet(filepath, engine='pyarrow')
                     combined_data = pd.concat([existing_data, filtered_data], ignore_index=True)
-                    combined_data.to_parquet(filepath, engine='pyarrow')
+                    combined_data.to_parquet(filepath, engine='pyarrow',index=True)
                 else:
-                    filtered_data.to_parquet(filepath, engine='pyarrow')
+                    filtered_data.to_parquet(filepath, engine='pyarrow',index=True)
 
     def save_analysis(self,df:pd.DataFrame,name:str,coin:bool=False):
         filepath=self._get_filepath_analysis(name,coin)
