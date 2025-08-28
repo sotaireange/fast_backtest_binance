@@ -17,7 +17,28 @@ class DataHandler:
 
     def __init__(self,config:MainConfig):
         self.config=config
+    def clean_multiindex_names(self,multiindex:pd.MultiIndex):
+        current_names = multiindex.names
 
+        new_names = []
+        levels_to_keep = []
+
+        for i, name in enumerate(current_names):
+            if name and ('tp_stop' in name or 'sl_stop' in name):
+                continue
+            elif name and name.startswith(f'{self.config.strategy.name}_'):
+                new_name = name.split('_',1)[1]
+                new_names.append(new_name)
+                levels_to_keep.append(i)
+            else:
+                new_names.append(name)
+                levels_to_keep.append(i)
+
+        multiindex_cleaned = multiindex.droplevel([i for i in range(len(current_names)) if i not in levels_to_keep])
+
+        multiindex_cleaned.names = new_names
+
+        return multiindex_cleaned
 
     def _get_filepath_raw(self,coin:str) -> str:
         folder_path = Path(self.FOLDER_PATH['raw']) / self.config.strategy.time.timeframe
@@ -108,7 +129,8 @@ class DataHandler:
     def get_combination_done(self,coin:str) -> Optional[pd.MultiIndex]:
         df=self.get_result_or_empty_df(coin)
         if not df.empty:
-            return df.index
+            index=self.clean_multiindex_names(df.index)
+            return index
 
 
 

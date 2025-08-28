@@ -106,8 +106,7 @@ class ParamCombinationsGenerator: #TODO: Сделать так , чтобы flag
         flag_forbidden = getattr(self.config.settings, 'flag_forbidden', False)
         flag_keys = self._flag_keys(params) if flag_forbidden else []
 
-        exclude_combos = list(map(tuple, exclude_combos)) if exclude_combos is not None and not exclude_combos.empty else None
-        #test
+        exclude_combos = list(map(tuple, exclude_combos)) if exclude_combos is not None and not exclude_combos.empty else []
         return BatchIterator(
             params,
             batch_size,
