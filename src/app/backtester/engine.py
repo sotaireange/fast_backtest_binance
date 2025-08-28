@@ -195,7 +195,7 @@ class MultiParamPortfolioBacktest:
                 self.get_result_from_backtest(data,params)
                 progress_sym=((idx*self.config.processor.max_chunks)/total_comb)
                 self.progress_dict[self.pid]=(data.coin,progress_sym,idx_symbol,total)
-                logger.info(self.progress_dict[self.pid])
+                # logger.info(self.progress_dict[self.pid])
             except Exception as e:
                 logger.exception(f'Error handled\n {e}')
 

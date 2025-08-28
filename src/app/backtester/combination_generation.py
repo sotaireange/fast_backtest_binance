@@ -111,7 +111,7 @@ class ParamCombinationsGenerator: #TODO: Сделать так , чтобы flag
             params,
             batch_size,
             flag_forbidden,
-            flag_keys,  aaz
+            flag_keys,
         )
 
 
