@@ -174,7 +174,7 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
             **params
         )).stats(agg_func=None)
         #TODO: Убрать
-        stats['Total return [%]']=stats['Total return [%]']*100
+        stats['Total Return [%]']=stats['Total Return [%]']*100
 
         return stats
 
