@@ -146,7 +146,8 @@ class DataHandler:
 
     def save_result(self, result: BackTestResult):
         filepath = self._get_filepath_result(result.coin)
-
+        rounded_columns=['Total Return [%]']
+        result.result[rounded_columns] = result.result[rounded_columns].round(2)
         write_header = not (os.path.exists(filepath) and os.path.getsize(filepath) > 0)
         if (result.result is not None) and (not result.result.empty):
             if self.FORMAT==FormatDataReader.CSV:
