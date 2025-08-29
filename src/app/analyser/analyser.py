@@ -48,15 +48,11 @@ class TradingAnalyser:
             grouped
             .apply(lambda x: x.sort_values("Total Return [%]", ascending=False).head(100))
         )
-        best_per_symbol_by_winrate=(
-            grouped
-            .apply(lambda x: x.sort_values("Win Rate [%]", ascending=False).head(100))
-    )
+
         for symbol,df_sym in best_per_symbol.groupby(level='symbol'):
+            df_sym=df_sym.droplevel(level='symbol')
             self.data_handler.save_analysis(df_sym,str(symbol),True)
 
-        for symbol,df_sym in best_per_symbol_by_winrate.groupby(level='symbol'):
-            self.data_handler.save_analysis(df_sym,f'{symbol}_winrate',True)
 
 
 

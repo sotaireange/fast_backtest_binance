@@ -142,9 +142,10 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
                                                  volume=data.df['Volume'].values)
         stats=self.run_portfolio(data.df,entry_exits,TpSlComb(tp=0.05,sl=0.03))
 
-    def run_portfolio(self,df:pd.DataFrame,entry_exits: EntryExitResult,tp_sl: TpSlComb) -> pd.DataFrame:
+    def run_portfolio(self,df:pd.DataFrame,entry_exits: EntryExitResult,tp_sl: TpSlComb) -> pd.DataFrame: #TODO: Size и size_type исправить на percent 0.1
         direction=self.config.strategy.type.get_direction()
         params={
+
             "entries":entry_exits.long_entries,
             "exits":entry_exits.long_exits,
             "short_entries":entry_exits.short_entries,
@@ -153,10 +154,10 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
             "upon_opposite_entry":'close',
             "tp_stop":tp_sl.tp,
             "sl_stop":tp_sl.sl,
-            "size":0.5,
+            "size":100,
             "fees":0.001,
             "init_cash":10000,
-            "size_type":'percent',
+            "size_type":'amount',
             "freq":df.index.freq,
         }
         if direction=='both':
