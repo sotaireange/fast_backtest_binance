@@ -166,15 +166,16 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
             params.pop('short_entries')
         else:
             params.pop('entries')
-
-
-        return (vbt.Portfolio.from_signals(
+        stats=(vbt.Portfolio.from_signals(
             close=df['Close'],
             open=df['Open'],
             high=df['High'],
             low=df['Low'],
             **params
         )).stats(agg_func=None)
+        #TODO: Убрать
+        stats['Total return [%]']=stats['Total return [%]']*100
+        return stats
 
 
 
