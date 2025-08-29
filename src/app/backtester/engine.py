@@ -154,7 +154,7 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
             "upon_opposite_entry":'close',
             "tp_stop":tp_sl.tp,
             "sl_stop":tp_sl.sl,
-            "size":0.1,
+            "size":0.5,
             "fees":0.001,
             "init_cash":10000,
             "size_type":'percent',
