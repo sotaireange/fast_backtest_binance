@@ -145,7 +145,6 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
     def run_portfolio(self,df:pd.DataFrame,entry_exits: EntryExitResult,tp_sl: TpSlComb) -> pd.DataFrame:
         direction=self.config.strategy.type.get_direction()
         params={
-
             "entries":entry_exits.long_entries,
             "exits":entry_exits.long_exits,
             "short_entries":entry_exits.short_entries,
