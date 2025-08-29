@@ -157,7 +157,7 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
             "size":100,
             "fees":0.001,
             "init_cash":10000,
-            "size_type":'amount',
+            "size_type":'value',
             "freq":df.index.freq,
         }
         if direction=='both':
