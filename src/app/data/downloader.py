@@ -120,7 +120,7 @@ class BinanceDataDownloader:
 
     async def download_and_save(
             self,
-            symbol: str,
+            symbol: str
     ):
 
         data_coverages=self.get_df_coverage(symbol)
@@ -143,8 +143,10 @@ class BinanceDataDownloader:
     ):
         symbols=await self._get_symbols()
         for symbol in symbols:
-            task=asyncio.create_task(self.download_and_save(symbol))
-            await asyncio.sleep(0.5)
-            self.tasks.append(task)
+            data_coverages=self.get_df_coverage(symbol)
+            if data_coverages:
+                await asyncio.sleep(0.5)
+                task=asyncio.create_task(self.download_and_save(symbol))
+                self.tasks.append(task)
 
         await asyncio.gather(*self.tasks)

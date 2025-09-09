@@ -1,6 +1,7 @@
 from typing import Tuple,Dict,List,Union,Optional
 import os
 from multiprocessing.managers import DictProxy
+import gc
 
 
 import numpy as np
@@ -22,6 +23,9 @@ from src.common.loggers import get_logger
 logger=get_logger('backtester',False)
 
 
+import gc, psutil, os
+
+
 
 
 class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет решить эту проблему, когда tp_sl комбинация
@@ -35,6 +39,10 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
         self.progress_dict=progress_dict if progress_dict else {}
         self.symbols=symbols if symbols else self.config.strategy.symbols.symbols
         self.pid=pid
+
+    def log_mem(self,stage):
+        proc = psutil.Process(os.getpid())
+        logger.info(f'PID {self.pid} {stage}  {proc.memory_info().rss / 1024**2} "MB"')
 
     def _get_entries(self,params:Dict,**kwargs) -> Tuple[pd.DataFrame,pd.DataFrame,pd.MultiIndex]:
         kwargs = {k: v for k, v in kwargs.items() if k in self.indicator.input_names}
@@ -93,33 +101,50 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
                                short_exits=short_exits,
                                index=columns)
 
-    def _get_tp_sl(self,entry_exits:EntryExitResult) -> Tuple[EntryExitResult,TpSlComb]:
-        entries=entry_exits.long_entries
-        short_entries=entry_exits.short_entries
-        long_exits=entry_exits.long_exits
-        short_exits=entry_exits.short_exits
+    def _get_tp_sl(self, entry_exits: EntryExitResult) -> Tuple[EntryExitResult, TpSlComb]:
+        entries = entry_exits.long_entries.values  # numpy
+        short_entries = entry_exits.short_entries.values  # numpy
+        long_exits = entry_exits.long_exits.values if entry_exits.long_exits is not None else None
+        short_exits = entry_exits.short_exits.values if entry_exits.short_exits is not None else None
 
-        tp_sl_index=self.config.strategy.size.get_combinations()
+        tp_sl_index = self.config.strategy.size.get_combinations()
+        n_tp_sl = len(tp_sl_index)
+        n_cols = entries.shape[1]
+        n_rows = entries.shape[0]
+
+        multi_index_tuples = [
+            tuple(list(entry_exits.long_entries.columns[i]) + list(tp_sl_index[j]))
+            for i in range(n_cols) for j in range(n_tp_sl)
+        ]
         multi_index = pd.MultiIndex.from_tuples(
-            [param + sltp for param in entries.columns for sltp in tp_sl_index],
-            names=entry_exits.long_entries.columns.names +tp_sl_index.names
+            multi_index_tuples, names=entry_exits.long_entries.columns.names + tp_sl_index.names
         )
-        entries_expanded = pd.concat([entries] * len(tp_sl_index), axis=1)
-        short_entries_expanded = pd.concat([short_entries] * len(tp_sl_index), axis=1)
+
+        entries_expanded = np.tile(entries, (1, n_tp_sl))
+        short_entries_expanded = np.tile(short_entries, (1, n_tp_sl))
+
         if long_exits is not None:
-            exits_expanded = pd.concat([long_exits] * len(tp_sl_index), axis=1)
-            short_exits_expanded = pd.concat([short_exits] * len(tp_sl_index), axis=1)
-            exits_expanded.columns = multi_index
-            short_exits_expanded.columns = multi_index
-            entry_exits.long_exits=exits_expanded
-            entry_exits.short_exits=short_exits_expanded
-        entries_expanded.columns = multi_index
-        short_entries_expanded.columns = multi_index
-        entry_exits.long_entries=entries_expanded
-        entry_exits.short_entries=short_entries_expanded
-        tp_values = [tp for _ in entries.columns for sl, tp in tp_sl_index]
-        sl_values = [sl for _ in entries.columns for sl, tp in tp_sl_index]
-        return entry_exits,TpSlComb(tp=tp_values,sl=sl_values)
+            long_exits_expanded = np.tile(long_exits, (1, n_tp_sl))
+            short_exits_expanded = np.tile(short_exits, (1, n_tp_sl))
+
+            entry_exits.long_exits = pd.DataFrame(long_exits_expanded, columns=multi_index, index=entry_exits.long_exits.index)
+            entry_exits.short_exits = pd.DataFrame(short_exits_expanded, columns=multi_index, index=entry_exits.short_exits.index)
+
+            del long_exits_expanded, short_exits_expanded
+            gc.collect()
+
+        entry_exits.long_entries = pd.DataFrame(entries_expanded, columns=multi_index, index=entry_exits.long_entries.index)
+        entry_exits.short_entries = pd.DataFrame(short_entries_expanded, columns=multi_index, index=entry_exits.short_entries.index)
+
+        del entries_expanded, short_entries_expanded, entries, short_entries
+        gc.collect()
+
+        tp_values = [tp for _ in range(n_cols) for sl, tp in tp_sl_index]
+        sl_values = [sl for _ in range(n_cols) for sl, tp in tp_sl_index]
+
+        return entry_exits, TpSlComb(tp=tp_values, sl=sl_values)
+
+
 
     def _combination_via_tp_sl(self,df:pd.DataFrame,entry_exits:EntryExitResult) -> pd.DataFrame:
         dfs=[]
@@ -127,7 +152,7 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
         for tp,sl in tp_sl_index:
             stats=self.run_portfolio(df,entry_exits,TpSlComb(tp=tp,sl=sl))
             stats.index = pd.MultiIndex.from_tuples(
-                [idx + (sl, tp)  for idx in stats.index],
+                [idx + (sl, tp) for idx in stats.index],
                 names=stats.index.names + ['sl_stop', 'tp_stop']
             )
             dfs.append(stats)
@@ -180,22 +205,24 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
 
 
     def get_result_from_backtest(self,data:BackTestData,params:Dict):
-        df=data.df
-        entry_exits=self._get_entries_and_exists(params,close=df['Close'].values,
-                                                 open=df['Open'].values,
-                                                 high=df['High'].values,
-                                                 low=df['Low'].values,
-                                                 volume=df['Volume'].values)
+        entry_exits=self._get_entries_and_exists(params,close=data.df['Close'].values,
+                                                 open=data.df['Open'].values,
+                                                 high=data.df['High'].values,
+                                                 low=data.df['Low'].values,
+                                                 volume=data.df['Volume'].values)
 
         if self.config.use_fast():
             entry_exits,tp_sl=self._get_tp_sl(entry_exits)
-            result=self.run_portfolio(df,entry_exits,tp_sl)
+            result=self.run_portfolio(data.df,entry_exits,tp_sl)
+            del entry_exits,tp_sl
         else:# self.config.strategy.size.use_fast:
-            result=self._combination_via_tp_sl(df,entry_exits)
+            result=self._combination_via_tp_sl(data.df,entry_exits)
+        self.log_mem('Before clear')
 
         backtest_result=BackTestResult(coin=data.coin,result=result)
         self.data_handler.save_result(backtest_result)
-
+        del backtest_result,result
+        gc.collect()
 
     def run_backtest_one_coin(self,data:BackTestData,total:int,idx_symbol:int):
         self._prepare_njit(data,self.params.single.to_dict())
@@ -206,6 +233,7 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
                 self.get_result_from_backtest(data,params)
                 progress_sym=((idx*self.config.processor.max_chunks)/total_comb)
                 self.progress_dict[self.pid]=(data.coin,progress_sym,idx_symbol,total)
+                self.log_mem(f'After clear{idx}')
                 # logger.info(self.progress_dict[self.pid])
             except Exception as e:
                 logger.exception(f'Error handled\n {e}')
@@ -213,6 +241,7 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
 
     def run(self):
         total=len(self.symbols)
+        self.log_mem('Start')
         try:
             for idx,symbol in enumerate(self.symbols):
                 self.progress_dict[self.pid]=(symbol,0.0,idx,total)
