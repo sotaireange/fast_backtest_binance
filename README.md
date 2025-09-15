@@ -15,10 +15,10 @@ A high-performance framework for backtesting crypto futures trading strategies u
 
 ## Tech Stack
 
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)!
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
-![Numba](https://img.shields.io/badge/Numba-00A3E0?style=for-the-badge&logo=python&logoColor=white)!
-![VectorBT](https://img.shields.io/badge/VectorBT-1A1A1A?style=for-the-badge)!
+![Numba](https://img.shields.io/badge/Numba-00A3E0?style=for-the-badge&logo=python&logoColor=white)
+![VectorBT](https://img.shields.io/badge/VectorBT-1A1A1A?style=for-the-badge)
 ![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)  
 ![Rich](https://img.shields.io/badge/Rich-9C27B0?style=for-the-badge&logo=python&logoColor=white)
 
@@ -163,7 +163,7 @@ This file is auto-generated on the first run and contains the parameters for you
 The program is operated via a command-line interface.
 
 ```bash  
-python -m src.interface.cli.cli  
+python main.py 
 ```  
 
 **Available Commands:**
