@@ -16,10 +16,10 @@ A high-performance framework for backtesting crypto futures trading strategies u
 ## Tech Stack
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)!
-[Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![Numba](https://img.shields.io/badge/Numba-00A3E0?style=for-the-badge&logo=python&logoColor=white)!
-[VectorBT](https://img.shields.io/badge/VectorBT-1A1A1A?style=for-the-badge)!
-[NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)  
+![VectorBT](https://img.shields.io/badge/VectorBT-1A1A1A?style=for-the-badge)!
+![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)  
 ![Rich](https://img.shields.io/badge/Rich-9C27B0?style=for-the-badge&logo=python&logoColor=white)
 
 
