@@ -5,7 +5,9 @@ from datetime import datetime
 import yaml
 import numpy as np
 
-
+#TODO: Make Config Better. Do it better settings like on/of TP/SL, choise Stock/Crypto. All settings to take from config.
+# Как это сделать. Попробовать расширить настройки до стокового, чтобы можно было настройками расширить функциональность до того, что я делаю.
+# Улучшить Бектест. Сделать несколько вариантов сохранения параметров. И т.д.
 
 class TypeConfig(BaseModel):
     long: bool
@@ -75,10 +77,21 @@ class ProcessorConfig(BaseModel):
     max_processors: int
     max_chunks: int
 
+class StockConfig(BaseModel):
+    top: str #500,1000,5000
+    use_list: bool
+    tickers: List[str]
 
 
-class MainConfig(BaseModel):
+class TickersConfig(BaseModel):
+    use_crypto: bool
+    stock: StockConfig
+    crypto: SymbolsConfig
+
+
+class MainConfig(BaseModel): #TODO: Поменять Strategy - на отдельных конфиг Symbols
     strategy: StrategyConfig
+    #tickers: TickersConfig
     processor: ProcessorConfig
 
     def __repr__(self):

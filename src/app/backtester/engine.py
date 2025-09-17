@@ -1,12 +1,13 @@
 from typing import Tuple,Dict,List,Union,Optional
-import os
 from multiprocessing.managers import DictProxy
-import gc
+import gc, psutil, os,sys
+
+from collections import deque
+
 
 
 import numpy as np
 import pandas as pd
-import logging
 import vectorbt as vbt
 
 from src.app.backtester.risk_managment import _get_exits
@@ -14,21 +15,36 @@ from src.app.utils.config_loader import get_param_config
 from src.app.strategies import get_strategy
 from src.app.models import EntryExitResult,MainConfig,TpSlComb,BackTestResult,BackTestData
 from src.app.backtester.combination_generation import ParamCombinationsGenerator
-from src.app.data.downloader import get_symbols
-from src.app.utils.helpers import chunkify
 from src.app.data.csv_handler import DataHandler
 from src.common.loggers import get_logger
+from src.app.data.types import METRICS
 
-
-logger=get_logger('backtester',False)
-
-
-import gc, psutil, os
+logger=get_logger('backtester',True,True)
 
 
 
+def get_deep_size(obj, seen=None):
+    """Приблизительный размер объекта вместе с вложенными."""
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    seen.add(obj_id)
+    size = sys.getsizeof(obj)
 
-class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет решить эту проблему, когда tp_sl комбинация
+    if isinstance(obj, dict):
+        size += sum((get_deep_size(k, seen) + get_deep_size(v, seen)) for k, v in obj.items())
+    elif hasattr(obj, '__dict__'):
+        size += get_deep_size(vars(obj), seen)
+    elif isinstance(obj, (list, tuple, set, frozenset, deque)):
+        size += sum(get_deep_size(i, seen) for i in obj)
+
+    return size
+
+
+
+class MultiParamPortfolioBacktest:
 
     def __init__(self, config:MainConfig,pid:int=0,symbols:Optional[List[str]]=None,progress_dict:Optional[DictProxy]=None):
         self.config:MainConfig=config
@@ -110,7 +126,6 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
         tp_sl_index = self.config.strategy.size.get_combinations()
         n_tp_sl = len(tp_sl_index)
         n_cols = entries.shape[1]
-        n_rows = entries.shape[0]
 
         multi_index_tuples = [
             tuple(list(entry_exits.long_entries.columns[i]) + list(tp_sl_index[j]))
@@ -130,15 +145,9 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
             entry_exits.long_exits = pd.DataFrame(long_exits_expanded, columns=multi_index, index=entry_exits.long_exits.index)
             entry_exits.short_exits = pd.DataFrame(short_exits_expanded, columns=multi_index, index=entry_exits.short_exits.index)
 
-            del long_exits_expanded, short_exits_expanded
-            gc.collect()
 
         entry_exits.long_entries = pd.DataFrame(entries_expanded, columns=multi_index, index=entry_exits.long_entries.index)
         entry_exits.short_entries = pd.DataFrame(short_entries_expanded, columns=multi_index, index=entry_exits.short_entries.index)
-
-        del entries_expanded, short_entries_expanded, entries, short_entries
-        gc.collect()
-
         tp_values = [tp for _ in range(n_cols) for sl, tp in tp_sl_index]
         sl_values = [sl for _ in range(n_cols) for sl, tp in tp_sl_index]
 
@@ -197,14 +206,17 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
             high=df['High'],
             low=df['Low'],
             **params
-        )).stats(agg_func=None)
-        #TODO: Убрать
+        )).stats(agg_func=None,metrics=METRICS)
+        gc.collect()
         stats['Total Return [%]']=stats['Total Return [%]']*100
         return stats
 
 
-
     def get_result_from_backtest(self,data:BackTestData,params:Dict):
+        #TODO: разделить все на чанки, добавить сохранение данных сразу после окончания работы,
+        # уменьшить создание новых данных,
+        # имезнить float64, int64 на float16/int8 где возможно, убрать некоторые параметры
+        # убрать .values , так как он и так справляется
         entry_exits=self._get_entries_and_exists(params,close=data.df['Close'].values,
                                                  open=data.df['Open'].values,
                                                  high=data.df['High'].values,
@@ -214,45 +226,48 @@ class MultiParamPortfolioBacktest: #TODO: MEMORY LEAK Нужно будет ре
         if self.config.use_fast():
             entry_exits,tp_sl=self._get_tp_sl(entry_exits)
             result=self.run_portfolio(data.df,entry_exits,tp_sl)
-            del entry_exits,tp_sl
+
         else:# self.config.strategy.size.use_fast:
             result=self._combination_via_tp_sl(data.df,entry_exits)
-        self.log_mem('Before clear')
 
-        backtest_result=BackTestResult(coin=data.coin,result=result)
+        backtest_result=BackTestResult(ticker=data.ticker, result=result)
         self.data_handler.save_result(backtest_result)
-        del backtest_result,result
-        gc.collect()
+
 
     def run_backtest_one_coin(self,data:BackTestData,total:int,idx_symbol:int):
         self._prepare_njit(data,self.params.single.to_dict())
         self._prepare_njit(data,self.params.single.to_dict())
         total_comb=self.params_comb.get_total_combinations()
-        for idx,params in enumerate(self.params_comb.init_batch(self.config.processor.max_chunks,self.data_handler.get_combination_done(data.coin))):
+        for idx,params in enumerate(self.params_comb.init_batch(self.config.processor.max_chunks, self.data_handler.get_combination_done(data.ticker))):
             try:
                 self.get_result_from_backtest(data,params)
                 progress_sym=((idx*self.config.processor.max_chunks)/total_comb)
-                self.progress_dict[self.pid]=(data.coin,progress_sym,idx_symbol,total)
-                self.log_mem(f'After clear{idx}')
+                self.progress_dict[self.pid]=(data.ticker, progress_sym, idx_symbol, total)
+                # self.log_mem(f'Memory used')
                 # logger.info(self.progress_dict[self.pid])
+            except MemoryError as mem_er:
+                logger.error(f'Mem is over. \n')
             except Exception as e:
-                logger.exception(f'Error handled\n {e}')
+                pass
+                logger.error(f'Error handled\n {e}')
+            finally:
+                gc.collect()
 
 
     def run(self):
         total=len(self.symbols)
-        self.log_mem('Start')
+        # self.log_mem('Start. ')
         try:
             for idx,symbol in enumerate(self.symbols):
                 self.progress_dict[self.pid]=(symbol,0.0,idx,total)
                 df=self.data_handler.get_or_empty_df(symbol)
                 if not df.empty:
-                    data=BackTestData(coin=symbol,df=df)
+                    data=BackTestData(ticker=symbol,df=df)
                     self.run_backtest_one_coin(data,total,idx)
                 else:
                     logger.info(f'Empty dataframe, symbol = {symbol}')
         except Exception as e:
-            logger.exception(f'Critical Error when backtest {e}')
+            logger.exception(f'Critical Error when backtest Ticker = {symbol}\n {e}')
         finally:
             logger.info(f'Finished PID {self.pid}')
             self.progress_dict[self.pid] = ("done", 1.0, total,total)

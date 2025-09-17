@@ -3,6 +3,8 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, List, Dict,Tuple
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 
 from src.common.loggers import get_logger
@@ -17,6 +19,7 @@ class DataHandler:
 
     def __init__(self,config:MainConfig):
         self.config=config
+
     def clean_multiindex_names(self,multiindex:pd.MultiIndex):
         current_names = multiindex.names
 
@@ -40,10 +43,10 @@ class DataHandler:
 
         return multiindex_cleaned
 
-    def _get_filepath_raw(self,coin:str) -> str:
+    def _get_filepath_raw(self,ticker:str) -> str:
         folder_path = Path(self.FOLDER_PATH['raw']) / self.config.strategy.time.timeframe
         folder_path.mkdir(parents=True, exist_ok=True)
-        return str(folder_path / f'{coin}.csv')
+        return str(folder_path / f'{ticker}.csv')
 
     def _get_folderpath_result(self) -> os.path:
         start_date=self.config.strategy.time.start_date.date()
@@ -61,13 +64,13 @@ class DataHandler:
         folder_path_symbol.mkdir(parents=True, exist_ok=True)
         return folder_path
 
-    def _get_filepath_analysis(self,name:str,coin:bool):
+    def _get_filepath_analysis(self,name:str,ticker:bool):
         folder_path=self._get_folderpath_analysis()
-        return str(folder_path / f'{name}.csv') if not coin else str(folder_path / 'symbols' / f'{name}.csv')
+        return str(folder_path / f'{name}.csv') if not ticker else str(folder_path / 'symbols' / f'{name}.csv')
 
-    def _get_filepath_result(self,coin:str) -> os.path:
+    def _get_filepath_result(self,ticker:str) -> os.path:
         folder_path=self._get_folderpath_result()
-        return str(folder_path / f'{coin}.{self.FORMAT}')
+        return str(folder_path / f'{ticker}.{self.FORMAT}')
 
 
     def _get_all_symbol_in_folder(self) -> List[str]:
@@ -75,8 +78,8 @@ class DataHandler:
         return [file.stem for file in folder_path.glob(f"*.{self.FORMAT}")]
 
 
-    def get_or_empty_df(self,coin:str) -> pd.DataFrame:
-        filepath=self._get_filepath_raw(coin)
+    def get_or_empty_df(self,ticker:str) -> pd.DataFrame:
+        filepath=self._get_filepath_raw(ticker)
         if os.path.exists(filepath):
             df= pd.read_csv(filepath,index_col='Open Time',parse_dates=True)
             df = df.sort_index()
@@ -91,14 +94,14 @@ class DataHandler:
         return [f'{self.config.strategy.name}_{param}' for param in get_strategy(self.config.strategy.name).param_names]
 
 
-    def get_df_with_datetime(self,coin:str,start:datetime,end:datetime) -> pd.DataFrame:
-        df= self.get_or_empty_df(coin)
+    def get_df_with_datetime(self,ticker:str,start:datetime,end:datetime) -> pd.DataFrame:
+        df= self.get_or_empty_df(ticker)
         df=df.loc[start:end]
         return df
 
 
-    def get_result_or_empty_df(self,coin:str) -> pd.DataFrame:
-        filepath=self._get_filepath_result(coin)
+    def get_result_or_empty_df(self,ticker:str) -> pd.DataFrame:
+        filepath=self._get_filepath_result(ticker)
         if os.path.exists(filepath):
             if self.FORMAT==FormatDataReader.CSV:
                 df=pd.read_csv(filepath,index_col=[])
@@ -126,16 +129,16 @@ class DataHandler:
 
 
 
-    def get_combination_done(self,coin:str) -> Optional[pd.MultiIndex]:
-        df=self.get_result_or_empty_df(coin)
+    def get_combination_done(self,ticker:str) -> Optional[pd.MultiIndex]:
+        df=self.get_result_or_empty_df(ticker)
         if not df.empty:
             index=self.clean_multiindex_names(df.index)
             return index
 
 
 
-    def save_raw_data(self, coin:str, df:pd.DataFrame):
-        filepath=self._get_filepath_raw(coin)
+    def save_raw_data(self, ticker:str, df:pd.DataFrame):
+        filepath=self._get_filepath_raw(ticker)
         header=True
         mode='w'
         if os.path.exists(filepath):
@@ -145,7 +148,7 @@ class DataHandler:
 
 
     def save_result(self, result: BackTestResult):
-        filepath = self._get_filepath_result(result.coin)
+        filepath = self._get_filepath_result(result.ticker)
         rounded_columns=['Total Return [%]']
         result.result[rounded_columns] = result.result[rounded_columns].round(2)
         write_header = not (os.path.exists(filepath) and os.path.getsize(filepath) > 0)
@@ -157,16 +160,23 @@ class DataHandler:
                     mode='a',
                     header=write_header,
                 )
-            else:
+            else: # Логика для Parquet
                 filtered_data = result.result[COLUMNS_RESULT]
+                table = pa.Table.from_pandas(filtered_data, preserve_index=True)
 
                 if os.path.exists(filepath):
-                    existing_data = pd.read_parquet(filepath, engine='pyarrow')
-                    combined_data = pd.concat([existing_data, filtered_data], ignore_index=False)
-                    combined_data.to_parquet(filepath, engine='pyarrow',index=combined_data.index)
-                else:
-                    filtered_data.to_parquet(filepath, engine='pyarrow',index=filtered_data.index)
 
-    def save_analysis(self,df:pd.DataFrame,name:str,coin:bool=False):
-        filepath=self._get_filepath_analysis(name,coin)
+                    existing_table = pq.read_table(filepath)
+
+                    combined_table = pa.concat_tables([existing_table, table])
+
+                    with pq.ParquetWriter(filepath, combined_table.schema) as writer:
+                        writer.write_table(combined_table)
+
+                else:
+                    with pq.ParquetWriter(filepath, table.schema) as writer:
+                        writer.write_table(table)
+
+    def save_analysis(self,df:pd.DataFrame,name:str,ticker:bool=False):
+        filepath=self._get_filepath_analysis(name,ticker)
         df.to_csv(filepath,index=True,mode='w')

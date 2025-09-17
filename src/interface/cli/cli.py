@@ -46,7 +46,11 @@ async def run_cli():
             log.info("Data download completed ✅")
         if command == "run":
             total_comb=get_total_combination(config)
-            log.info(f"Starting backtest for all parameters...\nTotal combination - {total_comb}")
+            total_comb_tp_sl=config.strategy.size.get_combinations().size
+            log.info(f"Starting backtest for all parameters...\n"
+                     f"Combinations: {total_comb}\n"
+                     f"Total combination with TP/SL - {total_comb*total_comb_tp_sl}\n"
+                     f"Used chunks {total_comb_tp_sl*config.processor.max_chunks}")
             run_backtest_with_liveupdater(config)
             log.info("Backtest completed ✅")
 

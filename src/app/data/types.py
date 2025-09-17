@@ -9,6 +9,37 @@ from datetime import datetime
 COLUMNS_RAW=['Open Time', 'Open', 'High', 'Low', 'Close', 'Volume']
 COLUMNS_RESULT=['Total Trades','Win Rate [%]','Total Return [%]']#, 'Max Drawdown [%]','Profit Factor','Sharpe Ratio']
 
+metrics_info={'Start': 'start',
+ 'End': 'end',
+ 'Period': 'period',
+ 'Start Value': 'start_value',
+ 'End Value': 'end_value',
+ 'Total Return [%]': 'total_return',
+ 'Benchmark Return [%]': 'benchmark_return',
+ 'Max Gross Exposure [%]': 'max_gross_exposure',
+ 'Total Fees Paid': 'total_fees_paid',
+ 'Max Drawdown [%]': 'max_dd',
+ 'Max Drawdown Duration': 'max_dd_duration',
+ 'Total Trades': 'total_trades',
+ 'Total Closed Trades': 'total_closed_trades',
+ 'Total Open Trades': 'total_open_trades',
+ 'Open Trade PnL': 'open_trade_pnl',
+ 'Win Rate [%]': 'win_rate',
+ 'Best Trade [%]': 'best_trade',
+ 'Worst Trade [%]': 'worst_trade',
+ 'Avg Winning Trade [%]': 'avg_winning_trade',
+ 'Avg Losing Trade [%]': 'avg_losing_trade',
+ 'Avg Winning Trade Duration': 'avg_winning_trade_duration',
+ 'Avg Losing Trade Duration': 'avg_losing_trade_duration',
+ 'Profit Factor': 'profit_factor',
+ 'Expectancy': 'expectancy',
+ 'Sharpe Ratio': 'sharpe_ratio',
+ 'Calmar Ratio': 'calmar_ratio',
+ 'Omega Ratio': 'omega_ratio',
+ 'Sortino Ratio': 'sortino_ratio'}
+
+METRICS=[metrics_info[key] for key in COLUMNS_RESULT]
+
 @dataclass
 class FormatDataReader:
     CSV='csv'

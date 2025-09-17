@@ -85,7 +85,7 @@ def ohlc_indicator(open: np.ndarray,
     Notes:
     ------
     - Function is compiled with @njit for high performance
-    - Registered in indicator registry as 'ohlc_indicator'
+    - Registered in indicator rфegistry as 'ohlc_indicator'
     - CRITICAL: Must always return (buy, sell) in this exact order
     - Uses vectorbt library for technical indicator calculations
     """
