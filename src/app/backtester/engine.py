@@ -19,7 +19,7 @@ from src.app.data.csv_handler import DataHandler
 from src.common.loggers import get_logger
 from src.app.data.types import METRICS
 
-logger=get_logger('backtester',True,True)
+logger=get_logger('backtester',False)
 
 
 
