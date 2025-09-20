@@ -1,6 +1,7 @@
 from typing import Tuple,Dict,List,Union,Optional
 from multiprocessing.managers import DictProxy
-import gc, psutil, os,sys
+import gc,os,sys
+# import psutil
 
 from collections import deque
 
@@ -24,7 +25,6 @@ logger=get_logger('backtester',False)
 
 
 def get_deep_size(obj, seen=None):
-    """Приблизительный размер объекта вместе с вложенными."""
     if seen is None:
         seen = set()
     obj_id = id(obj)
@@ -57,8 +57,9 @@ class MultiParamPortfolioBacktest:
         self.pid=pid
 
     def log_mem(self,stage):
-        proc = psutil.Process(os.getpid())
-        logger.info(f'PID {self.pid} {stage}  {proc.memory_info().rss / 1024**2} "MB"')
+        pass
+        # proc = psutil.Process(os.getpid())
+        # logger.info(f'PID {self.pid} {stage}  {proc.memory_info().rss / 1024**2} "MB"')
 
     def _get_entries(self,params:Dict,**kwargs) -> Tuple[pd.DataFrame,pd.DataFrame,pd.MultiIndex]:
         kwargs = {k: v for k, v in kwargs.items() if k in self.indicator.input_names}
@@ -213,10 +214,6 @@ class MultiParamPortfolioBacktest:
 
 
     def get_result_from_backtest(self,data:BackTestData,params:Dict):
-        #TODO: разделить все на чанки, добавить сохранение данных сразу после окончания работы,
-        # уменьшить создание новых данных,
-        # имезнить float64, int64 на float16/int8 где возможно, убрать некоторые параметры
-        # убрать .values , так как он и так справляется
         entry_exits=self._get_entries_and_exists(params,close=data.df['Close'].values,
                                                  open=data.df['Open'].values,
                                                  high=data.df['High'].values,
